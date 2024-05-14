@@ -1,0 +1,1 @@
+from aasma.simple_adversary.simple_adversary import SimpleAdversary
