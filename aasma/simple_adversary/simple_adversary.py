@@ -28,12 +28,12 @@ class SimpleAdversary(gym.Env):
 
     metadata = {'render.modes': ['human', 'rgb_array']}
 
-    def __init__(self, grid_shape=(5, 5), n_good_agents=2, n_bad_agents=1, n_landmarks=2, max_steps=100):
+    def __init__(self, grid_shape=(5, 5), n_good_agents=2, max_steps=100):
         self._grid_shape = grid_shape
         self.n_good_agents = n_good_agents
-        self.n_bad_agents = n_bad_agents
-        self.n_agents = n_good_agents + n_bad_agents
-        self.n_landmarks = n_landmarks
+        self.n_bad_agents = 1
+        self.n_agents = n_good_agents + self.n_bad_agents
+        self.n_landmarks = n_good_agents
         self._max_steps = max_steps
         self._step_count = None
 
@@ -71,7 +71,7 @@ class SimpleAdversary(gym.Env):
 
         done = self._step_count >= self._max_steps
         rewards = self.__calculate_rewards()
-        self._total_episode_reward = [self._total_episode_reward[i] + rewards[i] for i in range(self.n_agents)]
+        self._total_episode_reward = [self._total_episode_reward[i] + rewards[i] for i in range(2)]
 
         return self._get_obs(), rewards, [done] * self.n_agents, {}
 
@@ -111,14 +111,19 @@ class SimpleAdversary(gym.Env):
     def __calculate_rewards(self):
         real_landmark_pos = self.landmark_pos[self._real_landmark_idx]
         rewards = []
+        good_reward = self._grid_shape[0] + self._grid_shape[1]  # maximum possible distance
 
         for i in range(self.n_good_agents):
-            dist_to_real_landmark = self.__distance(self.agent_pos[i], real_landmark_pos)
-            rewards.append(-dist_to_real_landmark)
+            reward = -self.__distance(self.agent_pos[i], real_landmark_pos)
+            if reward < good_reward:
+                good_reward = reward
 
-        for i in range(self.n_bad_agents):
-            dist_to_real_landmark = self.__distance(self.agent_pos[self.n_good_agents + i], real_landmark_pos)
-            rewards.append(dist_to_real_landmark)
+        bad_reward = -self.__distance(self.agent_pos[self.n_good_agents], real_landmark_pos)
+
+        good_reward -= bad_reward
+
+        rewards.append(good_reward)
+        rewards.append(bad_reward)
 
         return rewards
 
@@ -131,10 +136,10 @@ class SimpleAdversary(gym.Env):
         for agent_i in range(self.n_agents):
             agent_obs = []
             for i in range(self.n_agents):
-                agent_obs += [self.agent_pos[i][0] / (self._grid_shape[0] - 1), self.agent_pos[i][1] / (self._grid_shape[1] - 1)]
+                agent_obs.append(self.agent_pos[i])
             for i in range(self.n_landmarks):
-                agent_obs += [self.landmark_pos[i][0] / (self._grid_shape[0] - 1), self.landmark_pos[i][1] / (self._grid_shape[1] - 1)]
-            agent_obs += [self._step_count / self._max_steps]
+                agent_obs.append(self.landmark_pos[i])
+            
             obs.append(agent_obs)
         
         return obs
