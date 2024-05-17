@@ -1,15 +1,16 @@
 import numpy as np
 from aasma.random_agent import RandomAgent
+from aasma.greedy_adversary import GreedyAdversary
 from aasma.simple_adversary.simple_adversary import SimpleAdversary
 import time
 
 def action_name(action):
     if action == 0:
-        return "UP"
-    elif action == 1:
         return "DOWN"
-    elif action == 2:
+    elif action == 1:
         return "LEFT"
+    elif action == 2:
+        return "UP"
     elif action == 3:
         return "RIGHT"
     elif action == 4:
@@ -23,8 +24,7 @@ def main():
     n_good_agents = 2
     n_bad_agents = 1
     n_agents = n_good_agents + n_bad_agents
-    grid_shape = (5, 5)
-    n_landmarks = 2
+    grid_shape = (10, 10)
     max_steps = 10
 
     # Initialize environment
@@ -34,7 +34,7 @@ def main():
 
     # Initialize agents
     good_agents = [RandomAgent(n_actions=5) for _ in range(n_good_agents)]
-    bad_agents = [RandomAgent(n_actions=5) for _ in range(n_bad_agents)]
+    bad_agents = [GreedyAdversary(n_actions=5) for _ in range(n_bad_agents)]
     agents = good_agents + bad_agents
 
     obs = env.reset()
@@ -42,27 +42,33 @@ def main():
     round = 0
 
     while not all(done):
+        round += 1
+        print("Round: ", round)
+        
         actions = []
         for i, agent in enumerate(agents):
             agent.see(obs[i])
-            actions.append(agent.action())
+            if i < n_good_agents:
+                actions.append(agent.action())
+            else:
+                actions.append(agent.action(obs[i], n_good_agents, grid_shape))
+
+        print("Actions: ", actions)
 
         obs, rewards, done, _ = env.step(actions)
         env.render(mode='human')
         
-        round += 1
-        print("Round: ", round)
         print("Agent 1: ", obs[0][0], " -> ", action_name(actions[0])) 
         print("Agent 2: ", obs[0][1], " -> ", action_name(actions[1]))
         print("Adversary: ", obs[0][2], " -> ", action_name(actions[2]))
         print("Landmark: ", env.landmark_pos[1])
+        print("Good Agents: ", rewards[0])
+        print("Bad Agent: ", rewards[1])
         print("\n")
 
         # wait 2 seconds between steps
         time.sleep(2)
 
-    print("Good Agents: ", rewards[0])
-    print("Bad Agent: ", rewards[1])
 
     env.close()
 

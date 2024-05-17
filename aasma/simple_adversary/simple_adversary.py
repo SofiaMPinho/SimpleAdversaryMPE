@@ -111,16 +111,16 @@ class SimpleAdversary(gym.Env):
     def __calculate_rewards(self):
         real_landmark_pos = self.landmark_pos[self._real_landmark_idx]
         rewards = []
-        good_reward = self._grid_shape[0] + self._grid_shape[1]  # maximum possible distance
+        good_reward = -(self._grid_shape[0] + self._grid_shape[1])  # maximum possible distance
 
         for i in range(self.n_good_agents):
             reward = -self.__distance(self.agent_pos[i], real_landmark_pos)
-            if reward < good_reward:
+            if reward > good_reward:
                 good_reward = reward
 
         bad_reward = -self.__distance(self.agent_pos[self.n_good_agents], real_landmark_pos)
 
-        good_reward -= bad_reward
+        good_reward += bad_reward
 
         rewards.append(good_reward)
         rewards.append(bad_reward)
@@ -188,7 +188,7 @@ ACTION_MEANING = {
     1: "LEFT",
     2: "UP",
     3: "RIGHT",
-    4: "NOOP",
+    4: "STAY",
 }
 
 PRE_IDS = {
