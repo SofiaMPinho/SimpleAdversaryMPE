@@ -111,24 +111,26 @@ class SimpleAdversary(gym.Env):
     def __calculate_rewards(self):
         real_landmark_pos = self.landmark_pos[self._real_landmark_idx]
         rewards = []
-        good_reward = -(self._grid_shape[0] + self._grid_shape[1])  # maximum possible distance
 
-        for i in range(self.n_good_agents):
-            reward = -self.__distance(self.agent_pos[i], real_landmark_pos)
-            if reward > good_reward:
-                good_reward = reward
+        bad_agent_idx = self.n_good_agents
+        bad_agent_pos = self.agent_pos[bad_agent_idx]
+        bad_reward = -self.__distance(bad_agent_pos, real_landmark_pos)
 
-        bad_reward = -self.__distance(self.agent_pos[self.n_good_agents], real_landmark_pos)
+        good_agents_pos = [self.agent_pos[i] for i in range(self.n_good_agents)]
+        pos_rewards = [-self.__distance(pos, real_landmark_pos) for pos in good_agents_pos]
+        pos_rew = max(pos_rewards)
 
-        good_reward += bad_reward
+        good_reward = pos_rew + bad_reward
 
+        # Append rewards for all teams [good agents, bad agent]
         rewards.append(good_reward)
         rewards.append(bad_reward)
 
         return rewards
 
     def __distance(self, pos1, pos2):
-        return np.linalg.norm(np.array(pos1) - np.array(pos2))
+        return np.sqrt(np.sum(np.square(np.array(pos1) - np.array(pos2))))
+
 
     def _get_obs(self):
         obs = []

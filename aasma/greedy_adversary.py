@@ -17,7 +17,7 @@ class GreedyAdversary(Agent):
         """
         n_good_agents = n_agents - 1
         start_landmark_idx = n_agents
-        adversary_idx = n_agents
+        adversary_idx = n_good_agents
 
         landmark_pos = observation[start_landmark_idx]
         dist = grid_shape[0] + grid_shape[1] # maximum distance possible
