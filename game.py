@@ -1,6 +1,8 @@
 import numpy as np
 from aasma.random_agent import RandomAgent
 from aasma.greedy_adversary import GreedyAdversary
+from aasma.greedy_agent import GreedyAgent
+from aasma.deceptive_agent import DeceptiveAgent
 from aasma.simple_adversary.simple_adversary import SimpleAdversary
 import time
 
@@ -33,9 +35,12 @@ def main():
                           max_steps=max_steps)
 
     # Initialize agents
-    good_agents = [RandomAgent(n_actions=5) for _ in range(n_good_agents)]
+    # good_agents = [GreedyAgent(n_actions=5) for _ in range(n_good_agents)]
+    greedy_agent = [GreedyAgent(n_actions=5,) for _ in range(1)]
+    deceptive_agent = [DeceptiveAgent(n_actions=5, ) for _ in range(1)]
+
     bad_agents = [GreedyAdversary(n_actions=5) for _ in range(n_bad_agents)]
-    agents = good_agents + bad_agents
+    agents = greedy_agent + deceptive_agent + bad_agents
 
     obs = env.reset()
     done = [False] * n_agents
@@ -48,8 +53,10 @@ def main():
         actions = []
         for i, agent in enumerate(agents):
             agent.see(obs[i])
-            if i < n_good_agents:
-                actions.append(agent.action())
+            if i == 0:
+                actions.append(agent.action(obs[i], n_agents, i))
+            elif i == 1:
+                actions.append(agent.action(obs[i], n_agents, i))
             else:
                 actions.append(agent.action(obs[i], n_agents, grid_shape))
 
