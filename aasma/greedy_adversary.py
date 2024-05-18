@@ -12,23 +12,27 @@ class GreedyAdversary(Agent):
         self.n_actions = n_actions
 
     def action(self, observation, n_agents, grid_shape) -> int:
-        # return that action that brings the agent closer to the landmark that has another agent closer to it
-        landmark_pos = observation[n_agents+1]
-        dist = grid_shape[0] + grid_shape[1] # maximum distance possible
+        """
+        return that action that brings the adversary closer to the landmark that has an agent closest to it
+        """
+        n_good_agents = n_agents - 1
+        start_landmark_idx = n_agents
+        adversary_idx = n_agents
 
-        print("Observation: ", observation)
+        landmark_pos = observation[start_landmark_idx]
+        dist = grid_shape[0] + grid_shape[1] # maximum distance possible
         
-        for i in range(n_agents):
-            for t in range(n_agents):
+        for i in range(n_good_agents):
+            for t in range(n_good_agents):
                 current_agent_pos = observation[i]
-                current_landmark_pos = observation[n_agents+1+t]
+                current_landmark_pos = observation[start_landmark_idx+t]
             
                 if self.distance(current_agent_pos, current_landmark_pos) < dist:
                     dist = self.distance(current_agent_pos, current_landmark_pos)
                     landmark_pos = current_landmark_pos
 
         # move towards landmark_pos
-        curr_pos = observation[n_agents]
+        curr_pos = observation[adversary_idx]
         return self.direction_to_go(curr_pos, landmark_pos)
     
     def distance(self, pos1, pos2):

@@ -51,7 +51,7 @@ def main():
             if i < n_good_agents:
                 actions.append(agent.action())
             else:
-                actions.append(agent.action(obs[i], n_good_agents, grid_shape))
+                actions.append(agent.action(obs[i], n_agents, grid_shape))
 
         print("Actions: ", actions)
 
