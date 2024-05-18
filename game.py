@@ -27,7 +27,7 @@ def main():
     n_bad_agents = 1
     n_agents = n_good_agents + n_bad_agents
     grid_shape = (10, 10)
-    max_steps = 10
+    max_steps = 20
 
     # Initialize environment
     env = SimpleAdversary(grid_shape=grid_shape, 
@@ -37,10 +37,10 @@ def main():
     # Initialize agents
     # good_agents = [GreedyAgent(n_actions=5) for _ in range(n_good_agents)]
     greedy_agent = [GreedyAgent(n_actions=5,) for _ in range(1)]
-    deceptive_agent = [DeceptiveAgent(n_actions=5, ) for _ in range(1)]
+    deceptive_agents = [DeceptiveAgent(n_actions=5, ) for _ in range(n_good_agents-1)]
 
     bad_agents = [GreedyAdversary(n_actions=5) for _ in range(n_bad_agents)]
-    agents = greedy_agent + deceptive_agent + bad_agents
+    agents = greedy_agent + deceptive_agents + bad_agents
 
     obs = env.reset()
     done = [False] * n_agents
@@ -54,27 +54,28 @@ def main():
         for i, agent in enumerate(agents):
             agent.see(obs[i])
             if i == 0:
-                actions.append(agent.action(obs[i], n_agents, i))
-            elif i == 1:
-                actions.append(agent.action(obs[i], n_agents, i))
+                actions.append(agent.action(obs[i], n_agents, i)) # greedy agent
+            elif i < n_good_agents:
+                actions.append(agent.action(obs[i], n_agents, i)) # deceptive agents
             else:
-                actions.append(agent.action(obs[i], n_agents, grid_shape))
-
-        print("Actions: ", actions)
+                actions.append(agent.action(obs[i], n_agents, grid_shape)) # bad agent
 
         obs, rewards, done, _ = env.step(actions)
         env.render(mode='human')
-        
-        print("Agent 1: ", obs[0][0], " -> ", action_name(actions[0])) 
-        print("Agent 2: ", obs[0][1], " -> ", action_name(actions[1]))
-        print("Adversary: ", obs[0][2], " -> ", action_name(actions[2]))
+
+        for i, agent in enumerate(agents):
+            print("Agent ", i, " -> ", obs[0][i], " -> ", action_name(actions[i]))
+
+            if i >= n_good_agents:
+                print("Bad Agent: ", obs[0][i], " -> ", action_name(actions[i]))
+
         print("Landmark: ", env.landmark_pos[1])
         print("Good Agents: ", rewards[0])
         print("Bad Agent: ", rewards[1])
         print("\n")
 
-        # wait 2 seconds between steps
-        time.sleep(2)
+        # wait 1 seconds between steps
+        time.sleep(1)
 
 
     env.close()

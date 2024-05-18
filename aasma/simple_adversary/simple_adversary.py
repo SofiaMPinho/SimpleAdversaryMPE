@@ -112,18 +112,29 @@ class SimpleAdversary(gym.Env):
         real_landmark_pos = self.landmark_pos[self._real_landmark_idx]
         rewards = []
 
+        # Get positions
         bad_agent_idx = self.n_good_agents
         bad_agent_pos = self.agent_pos[bad_agent_idx]
-        bad_reward = -self.__distance(bad_agent_pos, real_landmark_pos)
-
         good_agents_pos = [self.agent_pos[i] for i in range(self.n_good_agents)]
-        pos_rewards = [-self.__distance(pos, real_landmark_pos) for pos in good_agents_pos]
-        pos_rew = max(pos_rewards)
 
-        good_reward = pos_rew + bad_reward
+        # Calculate distances
+        bad_distance = self.__distance(bad_agent_pos, real_landmark_pos)
+        good_distances = [self.__distance(pos, real_landmark_pos) for pos in good_agents_pos]
+        closest_good_distance = min(good_distances)
+
+        # Calculate the maximum possible distance in the grid for normalization
+        max_distance = np.sqrt(self._grid_shape[0]**2 + self._grid_shape[1]**2)
+
+        # Reward calculations
+        bad_reward = -bad_distance  # The closer the bad agent is, the higher its reward
+        good_reward = -closest_good_distance  # Reward the closest good agent's distance
+        good_penalty = -np.log((max_distance - bad_distance) + 1)  # Penalize based on bad agent's distance
+
+        # Combine good reward and penalty
+        combined_good_reward = good_reward + good_penalty
 
         # Append rewards for all teams [good agents, bad agent]
-        rewards.append(good_reward)
+        rewards.append(combined_good_reward)
         rewards.append(bad_reward)
 
         return rewards
