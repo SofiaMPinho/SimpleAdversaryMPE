@@ -156,6 +156,20 @@ class SimpleAdversary(gym.Env):
             obs.append(agent_obs)
         
         return obs
+    
+    def _qlearning(self, n = 20, qinit = None):
+        gamma = 0.99
+        alpha = 0.3
+          
+        for i in range(n):
+            state = self._get_obs()
+            action = self.action_space.sample()
+            reward = self.__calculate_rewards()
+            state2 = self._get_obs()
+            action2 = self.action_space.sample()
+            qinit[state][action] = qinit[state][action] + alpha * (reward + gamma * qinit[state2][action2] - qinit[state][action])
+            
+        return qinit
 
     def render(self, mode='human'):
         img = draw_grid(self._grid_shape[0], self._grid_shape[1], cell_size = CELL_SIZE, fill='white')
