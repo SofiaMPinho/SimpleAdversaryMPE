@@ -1,24 +1,21 @@
 import random
 import numpy as np
-from aasma.agent import Agent
+from aasma.agents.agent import Agent
 
 N_ACTIONS = 5
 DOWN, LEFT, UP, RIGHT, STAY = range(N_ACTIONS)
 
-class GreedyAgent(Agent):
+class DeceptiveAgent(Agent):
 
     def __init__(self, n_actions: int):
-        super(GreedyAgent, self).__init__("Greedy Agent")
+        super(DeceptiveAgent, self).__init__("Deceptive Agent")
         self.n_actions = n_actions
 
     def action(self, observation, n_agents, agent_idx) -> int:
         """
-        return that action that brings the agent closer to the landmark
+        return that action that brings the agent closer to its corresponding fake landmark
         """
-        n_good_agents = n_agents - 1
-        landmark_idx = n_agents + n_good_agents - 1
-
-        print("Observation: ", observation)
+        landmark_idx = n_agents + agent_idx - 1
 
         landmark_pos = observation[landmark_idx]
         

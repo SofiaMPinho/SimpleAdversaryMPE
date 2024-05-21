@@ -1,5 +1,5 @@
 import numpy as np
-from aasma.agent import Agent
+from aasma.agents.agent import Agent
 
 class RandomAgent(Agent):
 

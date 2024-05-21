@@ -28,7 +28,7 @@ class SimpleAdversary(gym.Env):
 
     metadata = {'render.modes': ['human', 'rgb_array']}
 
-    def __init__(self, grid_shape=(5, 5), n_good_agents=2, max_steps=100):
+    def __init__(self, grid_shape=(10, 10), n_good_agents=2, max_steps=100, random_landmark=False):
         self._grid_shape = grid_shape
         self.n_good_agents = n_good_agents
         self.n_bad_agents = 1
@@ -36,6 +36,7 @@ class SimpleAdversary(gym.Env):
         self.n_landmarks = n_good_agents
         self._max_steps = max_steps
         self._step_count = None
+        self._random_landmark = random_landmark
 
         self.action_space = MultiAgentActionSpace([spaces.Discrete(5) for _ in range(self.n_agents)])
         self.agent_pos = {_: None for _ in range(self.n_agents)}
@@ -58,7 +59,10 @@ class SimpleAdversary(gym.Env):
         self.landmark_pos = {}
 
         self._step_count = 0
-        self._real_landmark_idx = random.randint(0, self.n_landmarks - 1)
+        if(self._random_landmark):
+            self._real_landmark_idx = random.randint(0, self.n_landmarks - 1)
+        else:
+            self._real_landmark_idx = 0
 
         self.__init_positions()
         return self._get_obs()
@@ -74,13 +78,19 @@ class SimpleAdversary(gym.Env):
         self._total_episode_reward = [self._total_episode_reward[i] + rewards[i] for i in range(2)]
 
         return self._get_obs(), rewards, [done] * self.n_agents, {}
-
+    
     def __init_positions(self):
         for agent_i in range(self.n_agents):
             self.agent_pos[agent_i] = self.__random_pos()
 
-        for landmark_i in range(self.n_landmarks):
-            self.landmark_pos[landmark_i] = self.__random_pos()
+        if(self._random_landmark):
+            for landmark_i in range(self.n_landmarks):
+                self.landmark_pos[landmark_i] = self.__random_pos()
+
+        else:
+            # put landmarks in the corners
+            self.landmark_pos[1] = [0, 0]
+            self.landmark_pos[0] = [self._grid_shape[0] - 1, self._grid_shape[1] - 1]
 
     def __random_pos(self):
         return [random.randint(0, self._grid_shape[0] - 1), random.randint(0, self._grid_shape[1] - 1)]
@@ -157,7 +167,7 @@ class SimpleAdversary(gym.Env):
         
         return obs
     
-    def _qlearning(self, n = 20, qinit = None):
+    def qlearning(self, n = 20, qinit = None):
         gamma = 0.99
         alpha = 0.3
           

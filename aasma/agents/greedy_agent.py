@@ -1,38 +1,27 @@
 import random
 import numpy as np
-from aasma.agent import Agent
+from aasma.agents.agent import Agent
 
 N_ACTIONS = 5
 DOWN, LEFT, UP, RIGHT, STAY = range(N_ACTIONS)
 
-class GreedyAdversary(Agent):
+class GreedyAgent(Agent):
 
     def __init__(self, n_actions: int):
-        super(GreedyAdversary, self).__init__("Greedy Adversary")
+        super(GreedyAgent, self).__init__("Greedy Agent")
         self.n_actions = n_actions
 
-    def action(self, observation, n_agents, grid_shape) -> int:
+    def action(self, observation, n_agents, agent_idx) -> int:
         """
-        return that action that brings the adversary closer to the landmark that has an agent closest to it
+        return that action that brings the agent closer to the landmark
         """
         n_good_agents = n_agents - 1
-        start_landmark_idx = n_agents
-        adversary_idx = n_good_agents
+        landmark_idx = n_agents + n_good_agents - 1
 
-        landmark_pos = observation[start_landmark_idx]
-        dist = grid_shape[0] + grid_shape[1] # maximum distance possible
+        landmark_pos = observation[landmark_idx]
         
-        for i in range(n_good_agents):
-            for t in range(n_good_agents):
-                current_agent_pos = observation[i]
-                current_landmark_pos = observation[start_landmark_idx+t]
-            
-                if self.distance(current_agent_pos, current_landmark_pos) < dist:
-                    dist = self.distance(current_agent_pos, current_landmark_pos)
-                    landmark_pos = current_landmark_pos
-
         # move towards landmark_pos
-        curr_pos = observation[adversary_idx]
+        curr_pos = observation[agent_idx]
         return self.direction_to_go(curr_pos, landmark_pos)
     
     def distance(self, pos1, pos2):
