@@ -39,7 +39,7 @@ def train():
                           max_steps=max_steps, random_landmark=False)
 
     # Initialize agents
-    good_agents = [QLearningAgent(n_actions=5, state_size=7, gamma=0.9, epsilon=0.0) for _ in range(n_good_agents)]
+    good_agents = [QLearningAgent(n_actions=5, agent_id=i) for i in range(n_good_agents)]
     bad_agent = [GreedyAdversary(n_actions=5) for _ in range(n_bad_agents)]
     agents = good_agents + bad_agent
 
@@ -70,7 +70,8 @@ def train():
 
         # Train RL agents
         for i in range(n_good_agents):
-            reward = 1 if rewards[0] > rewards[1] else -1 # are the good agents winning?
+            # reward = 1 if rewards[0] > rewards[1] else -1 # are the good agents winning?
+            reward = rewards[0] - rewards[1]
             state_new = good_agents[i].get_state(env, i)
             good_agents[i].train_short_memory(states_old[i], actions[i], reward, state_new, done[i])
             good_agents[i].remember(states_old[i], actions[i], reward, state_new, done[i])
@@ -80,9 +81,10 @@ def train():
 
         # Print actions
         for i, agent in enumerate(agents):
-            print("Agent ", i, " -> ", obs[i], " -> ", action_name(actions[i]))
             if i >= n_good_agents:
-                print("Bad Agent: ", obs[i], " -> ", action_name(actions[i]))
+                print("Adversary: ", obs[0][i], " -> ", action_name(actions[i]))
+            else:
+                print("Agent ", i+1, " -> ", obs[0][i], " -> ", action_name(actions[i]))
 
         print("Landmark: ", env.landmark_pos[0])
         print("Good Agents: ", rewards[0])
@@ -93,23 +95,27 @@ def train():
         if any(done):
             env.reset()
             for agent in good_agents:
+                print("Agent: ", agent.agent_id)
                 agent.n_games += 1
                 agent.train_long_memory()
-                if rewards[0] > record:
-                    record = rewards[0]
-                    agent.model.save()
+                if reward > record:
+                    agent.save_model()
 
-            print('Game', good_agents[0].n_games, 'Score', rewards[0], 'Record:', record)
+            if reward > record:
+                record = reward
+
+            print('Game', good_agents[0].n_games, 'Score', reward, 'Record:', record)
             round = 0
 
-            #plot_scores.append(rewards[0])
-            #total_score += rewards[0]
+            #plot_scores.append(reward)
+            #total_score += reward
             #mean_score = total_score / good_agents[0].n_games
             #plot_mean_scores.append(mean_score)
             #plot(plot_scores, plot_mean_scores)
 
             # wait 1 seconds between steps
-            # time.sleep(5)
+        #print("Press Enter to continue to the next iteration...")
+        #input()
 
 if __name__ == '__main__':
     train()

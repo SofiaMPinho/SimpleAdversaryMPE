@@ -6,14 +6,16 @@ from aasma.agents.agent import Agent
 from aasma.simple_adversary.simple_adversary import SimpleAdversary
 from aasma.model import Linear_QNet, QTrainer
 from aasma.helper import plot
+import os
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
+MODEL_PATH = './model'
 
 class QLearningAgent(Agent):
 
-    def __init__(self, n_actions: int, state_size, gamma=0.9, epsilon=0):
+    def __init__(self, n_actions: int, agent_id, state_size=11, gamma=0.9, epsilon=0):
         super(QLearningAgent, self).__init__("QLearning Agent")
         self.n_actions = n_actions
         self.epsilon = epsilon
@@ -22,23 +24,32 @@ class QLearningAgent(Agent):
         self.model = Linear_QNet(state_size, 256, n_actions)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
         self.n_games = 0
+        self.agent_id = agent_id
+
+        if os.path.exists(os.path.join(MODEL_PATH, "model_agent_{self.agent_id}.pth")):
+            self.model.load("model_agent_{self.agent_id}.pth")
 
     def get_state(self, game, agent_idx):
         agent_pos = game.agent_pos[agent_idx]
+        adversary_pos = game.agent_pos[game.n_good_agents]
         
         for i in range(game.n_landmarks):
             if i == game._real_landmark_idx:
                 landmark_pos = game.landmark_pos[i]
             else:
                 fake_landmark_pos = game.landmark_pos[i]
-        # other_good_agent_pos = [game.agent_pos[i] for i in range(game.n_good_agents) if i != agent_idx]
+        
+        other_good_agent_pos = [game.agent_pos[i] for i in range(game.n_good_agents) if i != agent_idx]
 
         state = [
             # current agent position
             agent_pos[0], agent_pos[1],
 
-            # other good agents positions
-            # *[pos for pos in other_good_agent_pos],
+            # other good agent position
+            other_good_agent_pos[0][0], other_good_agent_pos[0][1],
+
+            # adversary position
+            adversary_pos[0], adversary_pos[1],
 
             # real landmark position
             landmark_pos[0], landmark_pos[1],
@@ -46,11 +57,36 @@ class QLearningAgent(Agent):
             # fake landmark position
             fake_landmark_pos[0], fake_landmark_pos[1],
 
+            # real landmark direction
+            #agent_pos[0] < landmark_pos[0], # left
+            #agent_pos[0] > landmark_pos[0], # right
+            #agent_pos[1] < landmark_pos[1], # down
+            #agent_pos[1] > landmark_pos[1], # up
+#
+            ## fake landmark direction
+            #agent_pos[0] < fake_landmark_pos[0], # left
+            #agent_pos[0] > fake_landmark_pos[0], # right
+            #agent_pos[1] < fake_landmark_pos[1], # down
+            #agent_pos[1] > fake_landmark_pos[1], # up
+
+            ## relative distances to the real landmark
+            #np.linalg.norm(np.array(agent_pos) - np.array(landmark_pos)),
+            #np.linalg.norm(np.array(adversary_pos) - np.array(landmark_pos)),
+            #np.linalg.norm(np.array(other_good_agent_pos[0]) - np.array(landmark_pos)),
+#
+            ## relative distances to the fake landmark
+            #np.linalg.norm(np.array(agent_pos) - np.array(fake_landmark_pos)),
+            #np.linalg.norm(np.array(adversary_pos) - np.array(fake_landmark_pos)),
+            #np.linalg.norm(np.array(other_good_agent_pos[0]) - np.array(fake_landmark_pos)),
+#
+            ## current agent position (to capture symmetry and directional context)
+            #agent_pos[0], agent_pos[1],
+
             # step count
             game._step_count / game._max_steps
         ]
 
-        return np.array(state, dtype=int)
+        return np.array(state, dtype=float)
 
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))  # popleft if MAX_MEMORY is reached
@@ -73,9 +109,14 @@ class QLearningAgent(Agent):
             action = random.randint(0, 4)
             print("Random Action: ", action)
         else:
+            print("State: ", state)
             state0 = torch.tensor(state, dtype=torch.float)
             prediction = self.model(state0)
+            print("Prediction: ", prediction)
             action = torch.argmax(prediction).item()
             print("Predicted Action: ", action)
 
         return action
+    
+    def save_model(self):
+        self.model.save("model_agent_{self.agent_id}.pth")
