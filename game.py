@@ -1,8 +1,8 @@
 import numpy as np
-from aasma.random_agent import RandomAgent
-from aasma.greedy_adversary import GreedyAdversary
-from aasma.greedy_agent import GreedyAgent
-from aasma.deceptive_agent import DeceptiveAgent
+from aasma.agents.random_agent import RandomAgent
+from aasma.agents.greedy_adversary import GreedyAdversary
+from aasma.agents.greedy_agent import GreedyAgent
+from aasma.agents.deceptive_agent import DeceptiveAgent
 from aasma.simple_adversary.simple_adversary import SimpleAdversary
 import time
 
@@ -58,7 +58,7 @@ def main():
             elif i < n_good_agents:
                 actions.append(agent.action(obs[i], n_agents, i)) # deceptive agents
             else:
-                actions.append(agent.action(obs[i], n_agents, grid_shape)) # bad agent
+                actions.append(agent.action(obs[i], env)) # bad agent
 
         obs, rewards, done, _ = env.step(actions)
         env.render(mode='human')
