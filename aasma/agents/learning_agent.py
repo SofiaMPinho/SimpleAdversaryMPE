@@ -21,13 +21,14 @@ class QLearningAgent(Agent):
         self.epsilon = epsilon
         self.gamma = gamma
         self.memory = deque(maxlen=MAX_MEMORY)
-        self.model = Linear_QNet(state_size, 256, n_actions)
+        self.model = Linear_QNet(state_size, [256, 256], n_actions)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
         self.n_games = 0
         self.agent_id = agent_id
 
-        if os.path.exists(os.path.join(MODEL_PATH, "model_agent_{self.agent_id}.pth")):
-            self.model.load("model_agent_{self.agent_id}.pth")
+        if os.path.exists(os.path.join(MODEL_PATH, f"model_agent_{self.agent_id}.pth")):
+            self.model.load(f"model_agent_{self.agent_id}.pth")
+            self.model.eval()
 
     def get_state(self, game, agent_idx):
         agent_pos = game.agent_pos[agent_idx]
@@ -86,7 +87,7 @@ class QLearningAgent(Agent):
             game._step_count / game._max_steps
         ]
 
-        return np.array(state, dtype=float)
+        return np.array(state, dtype=int)
 
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))  # popleft if MAX_MEMORY is reached
@@ -119,4 +120,4 @@ class QLearningAgent(Agent):
         return action
     
     def save_model(self):
-        self.model.save("model_agent_{self.agent_id}.pth")
+        self.model.save(f"model_agent_{self.agent_id}.pth")
