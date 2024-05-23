@@ -89,8 +89,8 @@ class SimpleAdversary(gym.Env):
 
         else:
             # put landmarks in the corners
-            self.landmark_pos[1] = [0, 0]
-            self.landmark_pos[0] = [self._grid_shape[0]-1, self._grid_shape[1]-1]
+            self.landmark_pos[0] = [0, 0]
+            self.landmark_pos[1] = [self._grid_shape[0]-1, self._grid_shape[1]-1]
 
     def __random_pos(self):
         return [random.randint(0, self._grid_shape[0] - 1), random.randint(0, self._grid_shape[1] - 1)]

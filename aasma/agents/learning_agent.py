@@ -5,17 +5,16 @@ from collections import deque
 from aasma.agents.agent import Agent
 from aasma.simple_adversary.simple_adversary import SimpleAdversary
 from aasma.model import Linear_QNet, QTrainer
-from aasma.helper import plot
 import os
 
-MAX_MEMORY = 100_000
+MAX_MEMORY = 100_000_000
 BATCH_SIZE = 1000
 LR = 0.001
 MODEL_PATH = './model'
 
 class QLearningAgent(Agent):
 
-    def __init__(self, n_actions: int, agent_id, state_size=11, gamma=0.9, epsilon=0):
+    def __init__(self, n_actions: int, agent_id, state_size=16, gamma=0.9, epsilon=0):
         super(QLearningAgent, self).__init__("QLearning Agent")
         self.n_actions = n_actions
         self.epsilon = epsilon
@@ -44,47 +43,46 @@ class QLearningAgent(Agent):
 
         state = [
             # current agent position
-            agent_pos[0], agent_pos[1],
-
-            # other good agent position
-            other_good_agent_pos[0][0], other_good_agent_pos[0][1],
-
-            # adversary position
-            adversary_pos[0], adversary_pos[1],
+            #agent_pos[0], agent_pos[1],
+#
+            ## other good agent position
+            #other_good_agent_pos[0][0], other_good_agent_pos[0][1],
+#
+            ## adversary position
+            #adversary_pos[0], adversary_pos[1],
 
             # real landmark position
-            landmark_pos[0], landmark_pos[1],
+            #landmark_pos[0], landmark_pos[1],
 
             # fake landmark position
-            fake_landmark_pos[0], fake_landmark_pos[1],
+            #fake_landmark_pos[0], fake_landmark_pos[1],
 
             # real landmark direction
-            #agent_pos[0] < landmark_pos[0], # left
-            #agent_pos[0] > landmark_pos[0], # right
-            #agent_pos[1] < landmark_pos[1], # down
-            #agent_pos[1] > landmark_pos[1], # up
-#
-            ## fake landmark direction
-            #agent_pos[0] < fake_landmark_pos[0], # left
-            #agent_pos[0] > fake_landmark_pos[0], # right
-            #agent_pos[1] < fake_landmark_pos[1], # down
-            #agent_pos[1] > fake_landmark_pos[1], # up
+            agent_pos[0] < landmark_pos[0], # left
+            agent_pos[0] > landmark_pos[0], # right
+            agent_pos[1] < landmark_pos[1], # down
+            agent_pos[1] > landmark_pos[1], # up
 
-            ## relative distances to the real landmark
-            #np.linalg.norm(np.array(agent_pos) - np.array(landmark_pos)),
-            #np.linalg.norm(np.array(adversary_pos) - np.array(landmark_pos)),
-            #np.linalg.norm(np.array(other_good_agent_pos[0]) - np.array(landmark_pos)),
-#
-            ## relative distances to the fake landmark
-            #np.linalg.norm(np.array(agent_pos) - np.array(fake_landmark_pos)),
-            #np.linalg.norm(np.array(adversary_pos) - np.array(fake_landmark_pos)),
-            #np.linalg.norm(np.array(other_good_agent_pos[0]) - np.array(fake_landmark_pos)),
-#
-            ## current agent position (to capture symmetry and directional context)
-            #agent_pos[0], agent_pos[1],
+            # fake landmark direction
+            agent_pos[0] < fake_landmark_pos[0], # left
+            agent_pos[0] > fake_landmark_pos[0], # right
+            agent_pos[1] < fake_landmark_pos[1], # down
+            agent_pos[1] > fake_landmark_pos[1], # up
+
+            # adversary direction
+            agent_pos[0] < adversary_pos[0], # left
+            agent_pos[0] > adversary_pos[0], # right
+            agent_pos[1] < adversary_pos[1], # down
+            agent_pos[1] > adversary_pos[1], # up
+
+            # other good agent direction
+            agent_pos[0] < other_good_agent_pos[0][0], # left
+            agent_pos[0] > other_good_agent_pos[0][0], # right
+            agent_pos[1] < other_good_agent_pos[0][1], # down
+            agent_pos[1] > other_good_agent_pos[0][1], # up
 
             # step count
-            game._step_count / game._max_steps
+            #game._step_count / game._max_steps
         ]
 
         return np.array(state, dtype=int)
@@ -110,7 +108,7 @@ class QLearningAgent(Agent):
             action = random.randint(0, 4)
             print("Random Action: ", action)
         else:
-            print("State: ", state)
+            #print("State: ", state)
             state0 = torch.tensor(state, dtype=torch.float)
             prediction = self.model(state0)
             print("Prediction: ", prediction)

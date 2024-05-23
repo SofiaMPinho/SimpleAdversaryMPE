@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from aasma.simple_adversary.simple_adversary import SimpleAdversary
 from aasma.agents.learning_agent import QLearningAgent
-from aasma.helper import plot
+from aasma.helper import plot_score, plot_won
 from aasma.agents.greedy_adversary import GreedyAdversary
 import time
 
@@ -22,9 +22,9 @@ def action_name(action):
 
 def train():
     plot_scores = []
-    plot_mean_scores = []
-    total_score = 0
-    record = -10
+    plot_games_won = []
+    record = -20
+    games_won = 0
 
     # Parameters
     n_good_agents = 2
@@ -47,7 +47,7 @@ def train():
     done = [False] * n_agents
     round = 0
 
-    while True:
+    while agents[0].n_games < 800:
         round += 1
         print("Round: ", round)
 
@@ -70,8 +70,8 @@ def train():
 
         # Train RL agents
         for i in range(n_good_agents):
-            # reward = 1 if rewards[0] > rewards[1] else -1 # are the good agents winning?
-            reward = rewards[0] - rewards[1]
+            reward = 10 + rewards[0] - rewards[1] if rewards[0] > rewards[1] else -10 + rewards[0] - rewards[1] # are the good agents winning?
+            # reward = rewards[0] - rewards[1]
             state_new = good_agents[i].get_state(env, i)
             good_agents[i].train_short_memory(states_old[i], actions[i], reward, state_new, done[i])
             good_agents[i].remember(states_old[i], actions[i], reward, state_new, done[i])
@@ -95,7 +95,6 @@ def train():
         if any(done):
             env.reset()
             for agent in good_agents:
-                print("Agent: ", agent.agent_id)
                 agent.n_games += 1
                 agent.train_long_memory()
                 if reward > record:
@@ -104,18 +103,23 @@ def train():
             if reward > record:
                 record = reward
 
-            print('Game', good_agents[0].n_games, 'Score', reward, 'Record:', record)
+            if rewards[0] > rewards[1]:
+                games_won += 1
+
+            
+
+            print('Game', good_agents[0].n_games, 'Score', rewards[0] - rewards[1])
             round = 0
 
-            plot_scores.append(reward)
-            total_score += reward
-            mean_score = total_score / good_agents[0].n_games
-            plot_mean_scores.append(mean_score)
-            plot(plot_scores, plot_mean_scores)
+            plot_scores.append(rewards[0] - rewards[1])
+            plot_games_won.append(games_won/agent.n_games * 100)
+            plot_score(plot_scores)
+            plot_won(plot_games_won)
 
             # wait 1 seconds between steps
         #print("Press Enter to continue to the next iteration...")
         #input()
+    print('Training done! Games won:', games_won, 'Total games:', good_agents[0].n_games)
 
 if __name__ == '__main__':
     train()
