@@ -28,7 +28,7 @@ class SimpleAdversary(gym.Env):
 
     metadata = {'render.modes': ['human', 'rgb_array']}
 
-    def __init__(self, grid_shape=(10, 10), n_good_agents=2, max_steps=100, random_landmark=False):
+    def __init__(self, grid_shape=(10, 10), n_good_agents=2, max_steps=100, random_landmark=True, random_agents=True):
         self._grid_shape = grid_shape
         self.n_good_agents = n_good_agents
         self.n_bad_agents = 1
@@ -37,6 +37,7 @@ class SimpleAdversary(gym.Env):
         self._max_steps = max_steps
         self._step_count = None
         self._random_landmark = random_landmark
+        self._random_agents = random_agents
 
         self.action_space = MultiAgentActionSpace([spaces.Discrete(5) for _ in range(self.n_agents)])
         self.agent_pos = {_: None for _ in range(self.n_agents)}
@@ -80,13 +81,22 @@ class SimpleAdversary(gym.Env):
         return self._get_obs(), rewards, [done] * self.n_agents, {}
     
     def __init_positions(self):
-        for agent_i in range(self.n_agents):
-            self.agent_pos[agent_i] = self.__random_pos()
+        if(self._random_agents):
+            # choose random pos for agents
+            for agent_i in range(self.n_agents):
+                self.agent_pos[agent_i] = self.__random_pos()
+        else:
+            # put agents in the middle
+            for agent_i in range(self.n_agents):
+                self.agent_pos[agent_i] = [self._grid_shape[0] // 2, self._grid_shape[1] // 2]
 
         if(self._random_landmark):
+            # choose random pos for landmarks but they need to be at least 5 cells apart from each other
             for landmark_i in range(self.n_landmarks):
-                self.landmark_pos[landmark_i] = self.__random_pos()
-
+                pos = self.__random_pos()
+                while any([self.__distance(pos, self.landmark_pos[i]) < 5 for i in range(landmark_i)]):
+                    pos = self.__random_pos()
+                self.landmark_pos[landmark_i] = pos
         else:
             # put landmarks in the corners
             self.landmark_pos[0] = [0, 0]

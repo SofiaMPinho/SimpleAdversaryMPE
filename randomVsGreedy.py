@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from aasma.simple_adversary.simple_adversary import SimpleAdversary
-from aasma.agents.learning_agent import QLearningAgent
+from aasma.agents.random_agent import RandomAgent
 from aasma.helper import plot_score, plot_won
 from aasma.agents.greedy_adversary import GreedyAdversary
 import time
@@ -36,30 +36,28 @@ def train():
     # Initialize environment
     env = SimpleAdversary(grid_shape=grid_shape, 
                           n_good_agents=n_good_agents,
-                          max_steps=max_steps, random_landmark=False, random_agents=True)
+                          max_steps=max_steps, random_landmark=False, random_agents=False)
 
     # Initialize agents
-    good_agents = [QLearningAgent(n_actions=5, agent_id=i) for i in range(n_good_agents)]
+    good_agents = [RandomAgent(n_actions=5) for i in range(n_good_agents)]
     bad_agent = [GreedyAdversary(n_actions=5) for _ in range(n_bad_agents)]
     agents = good_agents + bad_agent
 
     obs = env.reset()
     done = [False] * n_agents
-    round = 0
+    round = 1
+    games = 1
 
     #while True:
-    while agents[0].n_games < 400:
-        round += 1
+    while games < 200:
         print("Round: ", round)
 
         actions = []
         states_old = []
 
-        # Actions for good agents (RL agents)
+        # Actions for good agents
         for i in range(n_good_agents):
-            state = good_agents[i].get_state(env, i)
-            states_old.append(state)
-            action = good_agents[i].action(state)
+            action = good_agents[i].action()
             actions.append(action)
 
         # Action for the greedy adversary
@@ -68,14 +66,6 @@ def train():
 
         # Step the environment
         next_obs, rewards, done, _ = env.step(actions)
-
-        # Train RL agents
-        for i in range(n_good_agents):
-            reward = 10 + rewards[0] - rewards[1] if rewards[0] > rewards[1] else -10 + rewards[0] - rewards[1] # are the good agents winning?
-            #reward = rewards[0] - rewards[1]
-            state_new = good_agents[i].get_state(env, i)
-            good_agents[i].train_short_memory(states_old[i], actions[i], reward, state_new, done[i])
-            good_agents[i].remember(states_old[i], actions[i], reward, state_new, done[i])
 
         env.render(mode='human')
         obs = next_obs
@@ -90,34 +80,26 @@ def train():
         print("Landmark: ", env.landmark_pos[0])
         print("Good Agents: ", rewards[0])
         print("Bad Agent: ", rewards[1])
-        print("Learning reward: ", reward)
         print("\n")
 
-        if any(done):
-            env.reset()
-            for agent in good_agents:
-                agent.n_games += 1
-                agent.train_long_memory()
-                if reward > record:
-                    agent.save_model()
-
-            if reward > record:
-                record = reward
-
+        if round == max_steps:
             if rewards[0] > rewards[1]:
-                games_won += 1 
+                games_won += 1
 
-            print('Game', good_agents[0].n_games, 'Score', rewards[0] - rewards[1])
+            print('Game', games, 'Score', rewards[0] - rewards[1])
             round = 0
+            games += 1
 
             plot_scores.append(rewards[0] - rewards[1])
-            plot_games_won.append(games_won/agent.n_games * 100)
-            plot_score(plot_scores, title="Game Scores by Learning Agents Team vs Greedy Adversary")
-            plot_won(plot_games_won, title="Games Won by Learning Agents Team vs Greedy Adversary")
+            plot_games_won.append(games_won/games * 100)
+            plot_score(plot_scores, filename="random_scores.jpg", title="Game Scores by Random Agents Team vs Greedy Adversary")
+            plot_won(plot_games_won, filename="random_wins.jpg", title="Games Won by Random Agents Team vs Greedy Adversary")
+
+        round += 1
 
         #print("Press Enter to continue to the next iteration...")
         #input()
-    print('Training done! Games won:', games_won, 'Total games:', good_agents[0].n_games)
+    print('Done! Games won:', games_won, 'Total games:', games)
 
 if __name__ == '__main__':
     train()
