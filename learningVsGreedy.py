@@ -36,7 +36,7 @@ def train():
     # Initialize environment
     env = SimpleAdversary(grid_shape=grid_shape, 
                           n_good_agents=n_good_agents,
-                          max_steps=max_steps, random_landmark=False)
+                          max_steps=max_steps, random_landmark=True)
 
     # Initialize agents
     good_agents = [QLearningAgent(n_actions=5, agent_id=i) for i in range(n_good_agents)]
