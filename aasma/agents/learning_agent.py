@@ -7,7 +7,7 @@ from aasma.simple_adversary.simple_adversary import SimpleAdversary
 from aasma.model import Linear_QNet, QTrainer
 import os
 
-MAX_MEMORY = 100_000_000
+MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
 MODEL_PATH = './model'
@@ -20,7 +20,7 @@ class QLearningAgent(Agent):
         self.epsilon = epsilon
         self.gamma = gamma
         self.memory = deque(maxlen=MAX_MEMORY)
-        self.model = Linear_QNet(state_size, [256, 256], n_actions)
+        self.model = Linear_QNet(state_size, [512, 256], n_actions)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
         self.n_games = 0
         self.agent_id = agent_id
@@ -42,21 +42,6 @@ class QLearningAgent(Agent):
         other_good_agent_pos = [game.agent_pos[i] for i in range(game.n_good_agents) if i != agent_idx]
 
         state = [
-            # current agent position
-            #agent_pos[0], agent_pos[1],
-#
-            ## other good agent position
-            #other_good_agent_pos[0][0], other_good_agent_pos[0][1],
-#
-            ## adversary position
-            #adversary_pos[0], adversary_pos[1],
-
-            # real landmark position
-            #landmark_pos[0], landmark_pos[1],
-
-            # fake landmark position
-            #fake_landmark_pos[0], fake_landmark_pos[1],
-
             # real landmark direction
             agent_pos[0] < landmark_pos[0], # left
             agent_pos[0] > landmark_pos[0], # right
@@ -80,9 +65,6 @@ class QLearningAgent(Agent):
             agent_pos[0] > other_good_agent_pos[0][0], # right
             agent_pos[1] < other_good_agent_pos[0][1], # down
             agent_pos[1] > other_good_agent_pos[0][1], # up
-
-            # step count
-            #game._step_count / game._max_steps
         ]
 
         return np.array(state, dtype=int)
@@ -103,17 +85,13 @@ class QLearningAgent(Agent):
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def action(self, state):
-        self.epsilon = 80 - self.n_games
+        self.epsilon = 120 - self.n_games
         if random.randint(0, 200) < self.epsilon:
             action = random.randint(0, 4)
-            print("Random Action: ", action)
         else:
-            #print("State: ", state)
             state0 = torch.tensor(state, dtype=torch.float)
             prediction = self.model(state0)
-            print("Prediction: ", prediction)
             action = torch.argmax(prediction).item()
-            print("Predicted Action: ", action)
 
         return action
     

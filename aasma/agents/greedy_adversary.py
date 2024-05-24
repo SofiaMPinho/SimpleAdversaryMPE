@@ -18,9 +18,10 @@ class GreedyAdversary(Agent):
         """
         n_good_agents = env.n_good_agents
         adversary_idx = n_good_agents
+        landmark_idx = random.randint(0, n_good_agents - 1)
 
-        landmark_pos = env.landmark_pos[0]
-        dist = env._grid_shape[0] + env._grid_shape[1] # maximum distance possible
+        landmark_pos = env.landmark_pos[landmark_idx]
+        dist = env._grid_shape[0] + env._grid_shape[1]
         
         for i in range(n_good_agents):
             for t in range(env.n_landmarks):

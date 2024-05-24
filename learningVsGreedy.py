@@ -36,7 +36,7 @@ def train():
     # Initialize environment
     env = SimpleAdversary(grid_shape=grid_shape, 
                           n_good_agents=n_good_agents,
-                          max_steps=max_steps, random_landmark=False, random_agents=True)
+                          max_steps=max_steps, random_landmark=False, random_agents=False)
 
     # Initialize agents
     good_agents = [QLearningAgent(n_actions=5, agent_id=i) for i in range(n_good_agents)]
@@ -47,8 +47,8 @@ def train():
     done = [False] * n_agents
     round = 0
 
-    #while True:
-    while agents[0].n_games < 400:
+    while True:
+        #while agents[0].n_games < 500:
         round += 1
         print("Round: ", round)
 
@@ -71,8 +71,7 @@ def train():
 
         # Train RL agents
         for i in range(n_good_agents):
-            reward = 10 + rewards[0] - rewards[1] if rewards[0] > rewards[1] else -10 + rewards[0] - rewards[1] # are the good agents winning?
-            #reward = rewards[0] - rewards[1]
+            reward = 10 + rewards[0] - rewards[1] if rewards[0] > rewards[1] else -10 + rewards[0] - rewards[1] # are the good agents winning? by how much?
             state_new = good_agents[i].get_state(env, i)
             good_agents[i].train_short_memory(states_old[i], actions[i], reward, state_new, done[i])
             good_agents[i].remember(states_old[i], actions[i], reward, state_new, done[i])
@@ -115,9 +114,9 @@ def train():
             plot_score(plot_scores, title="Game Scores by Learning Agents Team vs Greedy Adversary")
             plot_won(plot_games_won, title="Games Won by Learning Agents Team vs Greedy Adversary")
 
-        #print("Press Enter to continue to the next iteration...")
-        #input()
-    print('Training done! Games won:', games_won, 'Total games:', good_agents[0].n_games)
+        # uncomment the following to see the game step by step:
+        # print("Press Enter to continue to the next iteration...")
+        # input()
 
 if __name__ == '__main__':
     train()

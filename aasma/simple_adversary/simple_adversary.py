@@ -18,9 +18,9 @@ from ma_gym.envs.utils.observation_space import MultiAgentObservationSpace
 
 class SimpleAdversary(gym.Env):
     """
-    An altered version of ma_gym.envs.predator_prey.predator_prey.PredatorPrey
-    Instead, there are two teams: one with 2 agents (good team) and the other with 1 agent (bad agent), and 2 landmarks (a real and a fake one).
-    Instead of trying to catch the other agents, they strive to be as close as possible to the real landmark at the end of a cycle of movement.
+    An altered version of ma_gym.envs
+    There are two teams: one with 2 agents (good team) and the other with 1 agent (bad agent), and 2 landmarks (a real and a fake one).
+    They strive to be as close as possible to the real landmark at the end of a cycle of movement.
     The good agents can tell which is the real landmark, but the bad agent can't. The bad agent can only see the good agents and cannot tell the landmarks apart.
     The good agents are rewarded by closeness to the real landmark and penalized by the bad agent's closeness to the real landmark.
     The bad agent is rewarded by closeness to the real landmark. All rewards are given at the end of the cycle.
@@ -132,28 +132,23 @@ class SimpleAdversary(gym.Env):
         real_landmark_pos = self.landmark_pos[self._real_landmark_idx]
         rewards = []
 
-        # Get positions
         bad_agent_idx = self.n_good_agents
         bad_agent_pos = self.agent_pos[bad_agent_idx]
         good_agents_pos = [self.agent_pos[i] for i in range(self.n_good_agents)]
 
-        # Calculate distances
         bad_distance = self.__distance(bad_agent_pos, real_landmark_pos)
         good_distances = [self.__distance(pos, real_landmark_pos) for pos in good_agents_pos]
         closest_good_distance = min(good_distances)
 
-        # Calculate the maximum possible distance in the grid for normalization
         max_distance = np.sqrt(self._grid_shape[0]**2 + self._grid_shape[1]**2)
 
-        # Reward calculations
-        bad_reward = -bad_distance  # The closer the bad agent is, the higher its reward
-        good_reward = -closest_good_distance  # Reward the closest good agent's distance
-        good_penalty = -np.log((max_distance - bad_distance) + 1)  # Penalize based on bad agent's distance
+        bad_reward = -bad_distance
+        good_reward = -closest_good_distance
+        good_penalty = -np.log((max_distance - bad_distance) + 1) 
 
-        # Combine good reward and penalty
         combined_good_reward = good_reward + good_penalty
 
-        # Append rewards for all teams [good agents, bad agent]
+        # [good agents, bad agent]
         rewards.append(combined_good_reward)
         rewards.append(bad_reward)
 

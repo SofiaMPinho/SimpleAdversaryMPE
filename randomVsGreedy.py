@@ -77,7 +77,7 @@ def train():
             else:
                 print("Agent ", i+1, " -> ", obs[0][i], " -> ", action_name(actions[i]))
 
-        print("Landmark: ", env.landmark_pos[0])
+        print("Landmark: ", env.landmark_pos[env.real_landmark_idx])
         print("Good Agents: ", rewards[0])
         print("Bad Agent: ", rewards[1])
         print("\n")
